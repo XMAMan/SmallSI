@@ -44,9 +44,6 @@ namespace Physics.CollisionResolution
             float velocityInNormal = relativeVelocity * c.Normal;
             float restituion = System.Math.Min(c.B1.Restituion, c.B2.Restituion);
 
-            bool isRestingContact = System.Math.Abs(velocityInNormal) <= s.Gravity * s.Dt;
-            if (isRestingContact) restituion = 0; //When using a resting contact, the speed must remain 0
-
             float restitutionBias = -restituion * velocityInNormal;
 
             float biasFactor = s.DoPositionalCorrection ? s.PositionalCorrectionRate : 0.0f;
