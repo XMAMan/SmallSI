@@ -12,20 +12,10 @@ namespace Physics
 
         public void TimeStep(float dt)
         {
-            //Step 1: Add gravity-force to each body
-            foreach (var body in this.Bodies)
-            {
-                //Body is not moveable
-                if (body.InverseMass == 0)
-                    continue; 
-
-                body.Force += new Vec2D(0, this.Settings.Gravity) / body.InverseMass;
-            }
-
-            //Step 2: Get all collisionpoints
+            //Step 1: Get all collisionpoints
             var collisionsFromThisTimeStep = CollisionHelper.GetAllCollisions(Bodies);
 
-            //Step 3: Create Constraints
+            //Step 2: Create Constraints
             this.Settings.Dt = dt;
             this.Settings.InvDt = dt > 0.0f ? 1.0f / dt : 0.0f;
             List<IConstraint> constraints = new List<IConstraint>();
@@ -35,15 +25,17 @@ namespace Physics
                 constraints.Add(new FrictionConstraint(this.Settings, point));                
             }
 
-            //Step 4: Apply Gravity-Force
+            //Step 3: Apply Gravity-Force
             foreach (var body in Bodies)
             {
-                body.Velocity.X += body.InverseMass * body.Force.X * dt;
-                body.Velocity.Y += body.InverseMass * body.Force.Y * dt;
-                body.AngularVelocity += body.InverseInertia * body.Torque * dt;
+                //Body is not moveable
+                if (body.InverseMass == 0)
+                    continue;
+
+                body.Velocity.Y += body.InverseMass * this.Settings.Gravity / body.InverseMass * dt;
             }
 
-            //Step 5: Apply Normal- and Friction-Force by using sequentiell impulses
+            //Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
             for (int i = 0; i < this.Settings.IterationCount; i++)
             {
                 foreach (var c in constraints)
@@ -66,15 +58,11 @@ namespace Physics
                 }
             }
 
-            //Step 6: Move bodies
+            //Step 5: Move bodies
             foreach (var body in this.Bodies)
             {
                 body.MoveCenter(dt * body.Velocity);
                 body.Rotate(dt * body.AngularVelocity);
-
-                //Reset for the next TimeStep-call the external force
-                body.Force = new Vec2D(0, 0);
-                body.Torque = 0;
             }
         }
     }

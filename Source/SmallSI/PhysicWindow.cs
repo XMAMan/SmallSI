@@ -73,7 +73,5 @@ namespace SmallSI
 
             context.SwapBuffer();
         }
-
-        
     }
 }

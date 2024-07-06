@@ -14,9 +14,6 @@ namespace Physics
         public float InverseMass { get; private set; } //1 / Mass
         public float InverseInertia { get; private set; }
 
-        public Vec2D Force { get; set; } //Used for gravity
-        public float Torque { get; set; }
-
         public float Restituion { get; set; } = 0.2f;
         public float Friction { get; set; } = 0.1f;
 
@@ -42,8 +39,6 @@ namespace Physics
             this.InverseMass = density == float.MaxValue ? 0 : 1 / mass;
             this.InverseInertia = InverseMass == 0 ? 0 : 1.0f / (mass * (size.X * size.X + size.Y * size.Y) / 12f);
             
-            this.Force = new Vec2D(0, 0);
-
             this.Radius = (float)System.Math.Sqrt(size.X * size.X + size.Y * size.Y) / 2;
 
             this.vertexLocal = new Vec2D[]
