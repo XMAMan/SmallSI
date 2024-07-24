@@ -678,7 +678,6 @@ $\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a skalar and is named with
 
 If you now look in the TimeStep-Method from the PhysicScene-class then you might wonder what this lines of code do:
 
-We can now create an algorithm to correct the velocity-values after some collisionpoints are found.
 ```csharp
 // Clamp the accumulated impulse
 float oldSum = c.AccumulatedImpulse;
@@ -686,6 +685,35 @@ c.AccumulatedImpulse = ResolutionHelper.Clamp(oldSum + impulse, c.MinImpulse, c.
 impulse = c.AccumulatedImpulse - oldSum;
 ```
 See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
+
+For the normalconstraint the Min-Max-Impulse-propertys are definded with:
+```csharp
+public float MinImpulse { get; } = 0;
+public float MaxImpulse { get; } = float.MaxValue;
+```
+
+The normal-constraint should only push to bodys apart but never pull it together. To reach this the impulse must be positiv. So you would now think why not using this line of code?:
+
+```csharp
+float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection);
+impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
+```
+
+If you would clamp the impulse with this way then the sequentiell impulse algorithm has no change to correct a impulse, which was to hight.
+
+In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction is needet. If you use the wrong clamping then you have no change to correct this.
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="861" height="203" />
+
+That the reason, why use use the clamping for the impulse-sum but not for the single-impulse. 
+
+#### Position correction
+The next unknown think in code are the following lines in the NormalConstraint-class:
+
+```csharp
+float biasFactor = s.DoPositionalCorrection ? s.PositionalCorrectionRate : 0.0f;
+float positionBias = biasFactor * s.InvDt * System.Math.Max(0, c.Depth - s.AllowedPenetration);
+```
+
 
 
 
