@@ -12,7 +12,7 @@ namespace Physics.CollisionResolution
         float MaxImpulse { get; }
         Vec2D ForceDirection { get; } //B2 is pressed in this direction (B1 is pressed in the opposite direction)
         float Bias { get; } //Target for the relative speed of the contact points
-        float ImpulseMass { get; } //Conversion vector from the relative contact point velocity value to an impulse (corresponds to InverseK)
+        float EffectiveMass { get; } //Conversion vector from the relative contact point velocity value to an impulse (corresponds to InverseK)
         float AccumulatedImpulse { get; set; }
     }
 }

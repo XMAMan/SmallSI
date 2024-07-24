@@ -31,8 +31,8 @@ namespace Physics
                 //Body is not moveable
                 if (body.InverseMass == 0)
                     continue;
-
-                body.Velocity.Y += body.InverseMass * this.Settings.Gravity / body.InverseMass * dt;
+                
+                body.Velocity.Y += this.Settings.Gravity * dt; //v2 = v1 + a * dt     a = gravity
             }
 
             //Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
@@ -42,7 +42,7 @@ namespace Physics
                 {
                     Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, c.R1, c.R2);
                     float velocityInForceDirection = relativeVelocity * c.ForceDirection;
-                    float impulse = c.ImpulseMass * (c.Bias - velocityInForceDirection);
+                    float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection);
 
                     // Clamp the accumulated impulse
                     float oldSum = c.AccumulatedImpulse;

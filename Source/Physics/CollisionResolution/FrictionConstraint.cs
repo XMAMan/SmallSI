@@ -14,7 +14,7 @@ namespace Physics.CollisionResolution
 
         public Vec2D ForceDirection { get; }
         public float Bias { get; } = 0;
-        public float ImpulseMass { get; }
+        public float EffectiveMass { get; }
         public float AccumulatedImpulse { get; set; } = 0;
         public FrictionConstraint(Settings settings, CollisionInfo c)
         {
@@ -29,7 +29,7 @@ namespace Physics.CollisionResolution
             float r1crossT = Vec2D.ZValueFromCross(R1, tangent);
             float r2crossT = Vec2D.ZValueFromCross(R2, tangent);
 
-            this.ImpulseMass = 1.0f / (B1.InverseMass + B2.InverseMass +
+            this.EffectiveMass = 1.0f / (B1.InverseMass + B2.InverseMass +
                 r1crossT * r1crossT * B1.InverseInertia +
                 r2crossT * r2crossT * B2.InverseInertia);
 

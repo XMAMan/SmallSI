@@ -14,7 +14,7 @@ namespace Physics.CollisionResolution
 
         public Vec2D ForceDirection { get; } //B2 is pressed in this direction (B1 is pressed in the opposite direction)
         public float Bias { get; }
-        public float ImpulseMass { get; } //Conversionfactor from the relative contact point velocity to a impulse
+        public float EffectiveMass { get; } //Conversionfactor from the relative contact point velocity to a impulse
         public float AccumulatedImpulse { get; set; } = 0;
 
         public NormalConstraint(Settings settings, CollisionInfo c)
@@ -28,7 +28,7 @@ namespace Physics.CollisionResolution
             float r1crossN = Vec2D.ZValueFromCross(R1, c.Normal);
             float r2crossN = Vec2D.ZValueFromCross(R2, c.Normal);
 
-            this.ImpulseMass = 1.0f / (B1.InverseMass + B2.InverseMass +
+            this.EffectiveMass = 1.0f / (B1.InverseMass + B2.InverseMass +
                 r1crossN * r1crossN * B1.InverseInertia +
                 r2crossN * r2crossN * B2.InverseInertia);
 
