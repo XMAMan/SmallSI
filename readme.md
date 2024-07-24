@@ -702,9 +702,9 @@ float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection);
 impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
 ```
 
-If you would clamp the impulse in this way then the sequentiell impulse algorithm has no change to correct a impulse, which was to hight.
+If you would clamp the impulse in this way then the sequentiell impulse algorithm has no chance to correct a impulse, which was to hight.
 
-In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction is needet. If you use the wrong clamping then you have no change to correct this and the sum over all impulses  remains too high.
+In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction is needet. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses  remains too high.
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="574" height="135" />
 
 That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
