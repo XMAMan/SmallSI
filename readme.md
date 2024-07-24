@@ -8,7 +8,7 @@ Video
 
 ## Explanation how this works
 ### Move a single box without collisionhandling
-If you want to simulatate the movement from a 2D-Box then you need at first a datastructure, which holds the width, height, position and rotation from the box which may looks like this:
+If you want to simulate the movement from a 2D-Box then you need at first a datastructure, which holds the width, height, position and rotation from the box which may looks like this:
 
 ```csharp
 class Box
@@ -53,7 +53,7 @@ class Box
 The $F = m * a$-formular is a differential equation which can be solved with the Semi-implicit Euler method to get the position from each timestep. To use Semi-implicit Euler you have a x- and v-variable. Then you calculate at first the new value for velocity v and after this the new value for position x. You only use this two formulars if you use the time step size h:
 
 ```math
-\begin{align}v_2 &= v_1 * \frac{F}{m} \\ x_1 &= x_1 + h * v_2 \end{align}
+\begin{align}v_2 &= v_1 * \frac{F}{m} * h \\ x_1 &= x_1 + v_2 * h \end{align}
 ```
 
 The new function, which will move our box with semi-implicit euler looks like this now:
@@ -70,8 +70,8 @@ class Main
      Vec2D acceleration = gravityForce / box.Mass;
 
      //Semi-Implicit-Euler
-     box.Velocity += acceleration * dt; //v2 = v1 + dt * F/m
-     box.Center += box.Velocity * dt;   //x2 = x1 + dt * v2
+     box.Velocity += acceleration * dt; //v2 = v1 + F/m * dt
+     box.Center += box.Velocity * dt;   //x2 = x1 + v2 * dt
 
      DrawBox(box); //shows the box on the screen
   }
@@ -313,13 +313,13 @@ The gravity-force is called "extern force" and looks like this:
 
 There is no extern force, which will rotate the box so $\tau_{ext}=0$
 
-The resulting forces on the collisionpoints are called constraint-forces. Each force is applied to a anchorpoint and pushes the cube in normal- or tangent-direction and caused a translation-force and a torque. You have to sum these force for the cube:
+The resulting forces on the collisionpoints are called constraint-forces. Each force is applied to a anchorpoint and pushes the cube in normal- or tangent-direction and caused a translation-force and a torque. You have to sum these forces for the cube:
 
 $f_C = f_{N1} + f_{F1} + f_{N2} + f_{F2}$
 
 $\tau_C=r_1 \times f_{N1} + r_1 \times f_{F1} + r_2 \times f_{N2} + r_2 \times f_{F2}$
 
-If you know $f_C$ then you can calculate $\tau_C$ and also the resulting velocity from the box by using these formulars
+If you know $f_{N1}$, $f_{F1}$, $f_{N2}$, $f_{F2}$ then you can calculate $f_C$ and $\tau_C$ and also the resulting velocity from the box by using these formulars
 
 $m \dot v = f_C + f_{ext}$
 
@@ -329,18 +329,18 @@ $\dot v = \frac{v_2 - v_1}{\Delta t}$
 
 Where $v_1$ is the velocity from the box before applying the gravity- and constraint-force.
 
-$v_2$ is the velocity from the box after applying the gravity- and constraint-force
+$v_2$ is the velocity from the box after applying the gravity- and constraint-force.
 
-At the moment $f_C$ is unknown so we can not determine $v_2$
+At the moment $f_C$ and $\tau_C$ is unknown so we can not determine $v_2$
 
-To derivate a formular, which calculates $f_C$ we need a function, which measures how far the contactpoint from one box is entered into the side from the other box. 
+To derivate a formular, which calculates $f_C$ and $\tau_C$ we need a function, which measures how far the contactpoint from one box is entered into the side from the other box. 
 
 In this example there is one collisionpoint between the two boxes:
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalForce.png" width="115" height="185" />
 
 $r_1$ directs from the center from box 1 to the contactpoint from box 1 and $r_2$ directs from the center from box 2 to the contactpoint from box 2.
 
-We will now define a function $C_n$ which meares how far into normaldirection the contactpoint from box 2 enters into the upper edge from box 1:
+We will now define a function $C_n$ which measures how far into normaldirection the contactpoint from box 2 enters into the upper edge from box 1:
 
 $$C_n = (x_2 + r_2 - x_1 - r_1) * n_1$$
 
@@ -353,9 +353,9 @@ Derivative rule for a moving lever from a body with angular velocity $\omega$: $
 The derivative of C with respect to time is now as follows:
 
 ```math
- \dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1 + (x_2 + r_2 - x_1 - r_1)* \omega_1 \times n_1
+ \dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1 + (x_2 + r_2 - x_1 - r_1)* (\omega_1 \times n_1)
 ```
-The derivative of this measures the speed at which the collision points move towards each other in the direction of the collision normal. It receives the velocity values ​​of both cubes as input. We now simplify the function by omitting the second plus term, since we assume that the contact points are close to each other and therefore $(x_2 + r_2 - x_1 - r_1)$ is zero. 
+$\dot C_n$ measures the speed at which the collision points move towards each other in the direction of the collision normal. It receives the velocity values ​​of both cubes as input. We now simplify the function by omitting the second plus term, since we assume that the contact points are close to each other and therefore $(x_2 + r_2 - x_1 - r_1)$ is zero. 
 
 $\dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1$ -> take $n_1$ into the brackets
 
@@ -394,9 +394,11 @@ $V_1$ saves the velocity from both cubes before applying the gravity and normal-
 
 $V_2$ is simular defined but contains the velocity from both cubes after applying the gravity and normal-force.
 
-The still unknown $V_2$ should be at a contact point such that it satisfies the following equation:
+The still unknown $V_2$ should satisfies the following equation:
 
 ${J \cdot V_2 = -J \cdot V_1 * e}$ -> This is our NormalConstraint with Restitution e(=0..1)
+
+This means if the contact points between two bodies move by example with a speed from 5 in normal-direction then the resulting velocity from both bodies should be such that the speed in normal direction from the contant-points are -5*e after applying the normal-constraint-force.
 
 We also want a Friction-force which pushes in tangent direction $t_1$
 ```math
@@ -431,18 +433,18 @@ In our example with the cube on slope we have two collisionpoint and each collis
 J \cdot V_2 = \xi
 ```
 
-$\xi$ is a value specified by me which determines the relative velocity of the contact points after the constraint force is applied. For the FrictionConstraint I have defined $\xi=0$ and for the NormalConstraint $\xi=-J*V_1$. If you take a close look to the equation $J * V_2 = \xi$ then you will notice, that this is a equation for a plane in [Hesse normal form](https://en.wikipedia.org/wiki/Hesse_normal_form)
+$\xi$ is a value specified by me which determines the relative velocity of the contact points after the constraint force is applied. For the FrictionConstraint I have defined $\xi=0$ and for the NormalConstraint $\xi=-J \cdot V_1 * e$. If you take a close look to the equation $J * V_2 = \xi$ then you will notice, that this is a equation for a plane in [Hesse normal form](https://en.wikipedia.org/wiki/Hesse_normal_form)
 ```math
 \vec{r} \cdot \vec{n}_0 - d = 0
 ```
 
-where $\vec{n}_0$ is the normal from the plane and $d$ is the distance to the origin. $\vec{r}^{}$ are all points, which lies on the plane. For our Constraint this means J is the normal from the plane and $\xi$ is the plane distance to the origin. $V_2$ are all points which are located on the plane. Because J und $V_2$ are vectors with 6 skalar entries this means this is a 6 dimensional hyperplane.  
+where $\vec{n}_0$ is the normal from the plane and $d$ is the distance to the origin. $\vec{r}^{}$ are all points, which lies on the plane. For our Constraint this means J is the normal from the plane and $\xi$ is the plane distance to the origin. $V_2$ are all points which are located on the plane. Because J und $V_2$ are vectors with 6 scalar entries this means this is a 6 dimensional hyperplane.  
 
 You can imagin this Constraint-plane as a black line.
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/ConstraintPlane.png" width="307" height="151" />
 
-$V_1$ is a column vector with 6 entries which represents the velocity-values from two bodies after we have detect a collisionpoint between this two bodies and before we have applied any correction-force, which would push these bodies apart. We now want to apply a force to the two contact points from these bodies so that the resulting velocity $V_2$ match the constraint-equation $J \cdot V_2 = \xi$. The shortest way to get from $V_1$ a point $V_2$ on the plane is to go in J-Direction. J is a row-vector and V a column vector. If you transpose J then it is also a column vector. $J^T$ is parallel to the $(V_2 - V_1)$-direction. Because of this you can use the formular $V_2 = V_1 + J^T \cdot \lambda$ with skalar $\lambda$ to calculate $V_2$. If you want to move two contact points in contact point normal/tangent-direction then it means you have to push the contactpoints in $J^T$ direction. 
+$V_1$ is a column vector with 6 entries which represents the velocity-values from two bodies after we have detect a collisionpoint between this two bodies and before we have applied any correction-force, which would push these bodies apart. We now want to apply a force to the two contact points from these bodies so that the resulting velocity $V_2$ match the constraint-equation $J \cdot V_2 = \xi$. The shortest way to get from $V_1$ a point $V_2$ on the plane is to go in J-Direction. J is a row-vector and V a column vector. If you transpose J then it is also a column vector. $J^T$ is parallel to the $(V_2 - V_1)$-direction. Because of this you can use the formular $V_2 = V_1 + J^T \cdot \lambda$ with scalar $\lambda$ to calculate $V_2$. If you want to move two contact points in contact point normal/tangent-direction then it means you have to push the contactpoints in $J^T$ direction. 
 
 J is a 6 dimensional vector. How can it be a 2D-forcedirection? To understand this imagin you have the J from the normalconstraint and want to push the anchorpoint from body 1 in $-n_1$-direction and the anchorpoint from body 2 in $n_1$-direction. A force, which is applied to a anchorpoint is split into a translation-force and torque:
 
@@ -557,7 +559,7 @@ If you have only one constraint then formula (4) could be used to correct the ve
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
 
-You start on $V_1$. Applying the first impulse for constraint 1 which will correct the velocity-values from the two associated bodys for this constraint. Then you use the corrected velocitys which is the V in formula (4) use the impulse from constraint 2.
+You start on $V_1$. Applying the first impulse for constraint 1 which will correct the velocity-values from the two associated bodys for this constraint. Then you use the corrected velocitys which is the V in formula (4) and use the impulse from constraint 2.
 
 If you want to use formula (4) then you have to calculate $\frac{1}{J \cdot M^{-1} \cdot J^T}$. This term is called effective Mass. For the normal constraint the calculation from the $J \cdot M^{-1} \cdot J^T$-term is:
 
@@ -638,14 +640,15 @@ public static Vec2D GetRelativeVelocityBetweenAnchorPoints(RigidRectangle b1, Ri
 ```
 See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/CollisionResolution/ResolutionHelper.cs
 
-Relative velocity with respect to direction $n$ means we project the velocity-vector to a direction with the dot-product $(\dot{p}_2 - \dot{p}_1) \cdot n$ and this is the same is writing $= J \cdot V$
+Relative velocity with respect to direction $n$ means we project the velocity-vector to a direction with the dot-product $(\dot{p}_2 - \dot{p}_1) \cdot n$ and this is the same as writing $J \cdot V$
 
-In the normal constraint the $\xi$-term is called bias and this term is defined by $\xi=-J*V_1$
+In the normal constraint the $\xi$-term is called bias and this term is defined by $\xi=-J \cdot V_1 * e$
 
 In the code this term is called restitutionBias and is calculated as follows:
 
 ```csharp
 // Relative velocity in normal direction
+Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, r1, r2);
 float velocityInNormal = relativeVelocity * c.Normal;
 float restituion = System.Math.Min(c.B1.Restituion, c.B2.Restituion);
 
@@ -672,7 +675,7 @@ c.B2.AngularVelocity += Vec2D.ZValueFromCross(c.R2, impulseVec) * c.B2.InverseIn
 See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
 
 Where $\frac{1}{J \cdot M^{-1} \cdot J^T}$ is the EffectiveMass, $\xi$ is Bias and $J \cdot V$ is velocityInForceDirection.
-$\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a skalar and is named with the impulse-variable and applying this constraint-impuls means, that you push body 1 in -ForceDirection-direction and body 2 in +ForceDirection-direction.
+$\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with the impulse-variable and applying this constraint-impuls means, that you push body 1 in -ForceDirection-direction and body 2 in +ForceDirection-direction.
 
 #### Accumulated Impulse
 
@@ -699,12 +702,12 @@ float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection);
 impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
 ```
 
-If you would clamp the impulse with this way then the sequentiell impulse algorithm has no change to correct a impulse, which was to hight.
+If you would clamp the impulse in this way then the sequentiell impulse algorithm has no change to correct a impulse, which was to hight.
 
-In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction is needet. If you use the wrong clamping then you have no change to correct this.
+In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction is needet. If you use the wrong clamping then you have no change to correct this and the sum over all impulses  remains too high.
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="574" height="135" />
 
-That the reason, why use use the clamping for the impulse-sum but not for the single-impulse. 
+That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
 
 #### Position correction
 The next unknown think in code are the following lines in the NormalConstraint-class:
@@ -717,15 +720,50 @@ float positionBias = biasFactor * s.InvDt * System.Math.Max(0, c.Depth - s.Allow
 With the normal constraint ${J \cdot V_2 = -J \cdot V_1 * e}$ we determine which relative speed the contact points should have after the correction.
 However, we are currently not specifying what the distance between the anchor points should be. Imaging we have a box with restitution e=0 which is falling down on the ground. In each timestep the box moves a certain distance. If the collision routine now detects, that the box is inside the ground the box will be in the ground with a certain distance.
 
-In this example two collision-points are detected and each point has the distance 'Depth' between the the anchorpoints:
+In this example two collision-points are detected and each point has the distance 'Depth' between the anchorpoints:
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/CubeFallingDown.png" width="630" height="217" />
 
 Because of the restitution of zero the normal constraint for both collisionpoints will bring the velocity from the box to zero but the box then remains stuck in the ground.
 
 To correct this a extra impulse is needet, which pushes the box out of the ground. 
 
+The box is moved in each timestep by 'body.Velocity * dt' If you want to move the box 10 pixels uppwards then 'body.Velocity*dt' must be 'new Vec2D(0, -10)' that means body.Velocity must be 'new Vec2D(0, -10) / dt'. Because of this the positionBias contains the follwing term: 
+
+```csharp
+s.InvDt * c.Depth
+```
+This will move the box by c.Depth pixels in collisionpoint-normaldirection.
+
+The next think is that you must not press the box exactly on the top edge otherwise the contact points will be lost. If this happens the box will falling down for one TimeStep and this causes the box to jump a little bit. The AllowedPenetration determines how many pixels below the top edge the box is pushed.
+
+Thats the reason for: System.Math.Max(0, c.Depth - s.AllowedPenetration)
+
+This lines of code now means, that the box is pushed AllowedPenetration pixels below the top edge from the ground:
+```csharp
+float positionBias = s.InvDt * System.Math.Max(0, c.Depth - s.AllowedPenetration);
+```
+
+The next think is the PositionalCorrectionRate. Imagine there is a there is a ball-stack. If you use a PositionalCorrectionRate from 1 the ground will push the lower ball upwards into the upper ball and this will give the upper ball a impulse upwards so that he is thrown away.
+If the PositionalCorrectionRate is instead 0.2 then the correction will take place several time steps and in this case the ball stack stands calm.
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/PositionalCorrectionRate.png" width="330" height="264" />
+
+The last think is the DoPositionalCorrection-switch. If you want to simulate a jumping-ball/cube with restituion from 1 then position correction would give the ball at each bounce a extra impulse. This means that the ball gets higher with each jump. If you want to simulate a jumping ball with  restituion 1 then you would set DoPositionalCorrection to false.
+
+
 #### Note on gravity
 
+The last think is the gravity-force. We have now a way to use constraint-impulses to push overlapping bodies apart and to simulate friction.
+
+If you take a look into the TimeStep-method then there are the following steps:
+* Step 1: Get all collisionpoints
+* Step 2: Create Constraints
+* Step 3: Apply Gravity-Force
+* Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
+* Step 5: Move bodies
+
+If you would apply the gravity bevore Step 2 then this would change the velocity from each body and in the constructor from each constraint-object the Bias-Function would use a wrong velocity-value to calculate the bias. If you apply gravity after step 4, it will not be taken into account in the constraint loop. The resulting $V_2$ is then wrong. Thats the reason why the gravity is exactly at step 3 after bias-calculation and bevore the constraint-impulse-loop.
+
+I hope this little guide is a good help for understanding how a physics engines works.
 
 Related work
 ------------
