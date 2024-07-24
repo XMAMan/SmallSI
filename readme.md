@@ -561,7 +561,7 @@ You start on $V_1$. Applying the first impulse for constraint 1 which will corre
 
 If you want to use formula (4) then you have to calculate $\frac{1}{J \cdot M^{-1} \cdot J^T}$. This term is called effective Mass. For the normal constraint the calculation from the $J \cdot M^{-1} \cdot J^T$-term is:
 
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalConstraintEffectiveMass.png" width="675" height="607" />
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalConstraintEffectiveMass.png" width="450" height="405" />
 
 Despite we are working here with vectors and a matrix so resulting term is a scalar value (green marked).
 
@@ -702,7 +702,7 @@ impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
 If you would clamp the impulse with this way then the sequentiell impulse algorithm has no change to correct a impulse, which was to hight.
 
 In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction is needet. If you use the wrong clamping then you have no change to correct this.
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="861" height="203" />
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="574" height="135" />
 
 That the reason, why use use the clamping for the impulse-sum but not for the single-impulse. 
 
@@ -714,7 +714,17 @@ float biasFactor = s.DoPositionalCorrection ? s.PositionalCorrectionRate : 0.0f;
 float positionBias = biasFactor * s.InvDt * System.Math.Max(0, c.Depth - s.AllowedPenetration);
 ```
 
+With the normal constraint ${J \cdot V_2 = -J \cdot V_1 * e}$ we determine which relative speed the contact points should have after the correction.
+However, we are currently not specifying what the distance between the anchor points should be. Imaging we have a box with restitution e=0 which is falling down on the ground. In each timestep the box moves a certain distance. If the collision routine now detects, that the box is inside the ground the box will be in the ground with a certain distance.
 
+In this example two collision-points are detected and each point has the distance 'Depth' between the the anchorpoints:
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/CubeFallingDown.png" width="630" height="217" />
+
+Because of the restitution of zero the normal constraint for both collisionpoints will bring the velocity from the box to zero but the box then remains stuck in the ground.
+
+To correct this a extra impulse is needet, which pushes the box out of the ground. 
+
+#### Note on gravity
 
 
 Related work
