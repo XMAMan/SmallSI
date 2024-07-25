@@ -36,7 +36,7 @@ class Main
 }
 ```
 
-This function would make the box fall evenly downwards. But here we would like to use Newton’s physical laws for the movement. This means we want to use the formula $F = m * a$. In our case we have only the gravity which is our force F. The box needs at next a Mass-Property which will be the m-variable in the formular. The Gravity-force F will produce a acceleration of $a = \frac{F}{m}$. Acceleration is defined as the rate of change of velocity with respect to time. The second derivative of the position x also gives the acceleration. $a=\frac{dv}{dt}=\dot{v}=\ddot{x}$. The next think which we need to describe the current state from our box is the velocity. 
+This function would make the box fall evenly downwards. But here we would like to use Newton’s physical laws for the movement. This means we want to use the formula $F = m * a$. In our case we have only want to use the the gravity with a=9.81. The box needs at next a Mass-Property which will be the m-variable in the formular. The Gravity-force F will produce a acceleration of $a = \frac{F}{m}$. Acceleration is defined as the rate of change of velocity with respect to time. The second derivative of the position x also gives the acceleration. $a=\frac{dv}{dt}=\dot{v}=\ddot{x}$. The next think which we need to describe the current state from our box is the velocity. 
 Our new box-class looks now like this:
 
 ```csharp
@@ -61,7 +61,7 @@ The new function, which will move our box with semi-implicit euler looks like th
 class Main
 {
   private Box box = new Box();  
-  private float gravity = 9.81f;
+  private float gravity = 9.81f; //a=9.81
 
   //This function is called every 20 ms. dt has the value from 20.
   void HandleTimerTick(float dt)
@@ -165,7 +165,7 @@ class Main
   void HandleTimerTick(float dt)
   {
      //Use gravity-force to change the velocity
-     box.Velocity += gravity * dt; 
+     box.Velocity.Y += gravity * dt; 
 
      //Use a extern force, which directs to 'forceDirection' and is applied to a anchorpoint 'pointOnBox' to update the velocity
      //calculate linearAcceleration and angularAcceleration
