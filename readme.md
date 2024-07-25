@@ -292,8 +292,8 @@ public static CollisionInfo[] GetAllCollisions(List<RigidRectangle> bodies)
 We have now the possibility to simulate a box, which is falling down and to place a fixed box as ground. We can also detect, if there are collisionpoints between the falling box and the ground available. The next think, what we need is a function, which calculate for each collisionpoint a force, which will push the two boxes apart so that the falling box will not sink in the ground. 
 
 For each collision-point there are two kind of forces: 
-* NormalForce = Force, which pushes two anchorpoints between two bodies in collision-normal-direction apart
-* FrictionForce = Force which pushes two anchorpoints between two bodies in collision-tangent-direction together
+* NormalForce = Force, which pushes two anchor points between two bodies in collision-normal-direction apart
+* FrictionForce = Force which pushes the anchor points in tangent-direction. It slows down the movement in tangent-direction.  
 
 If you want to simulate a cube sitting moveless on a slope then you have 5 force-vectors, which will hold the cube in calm.
 
@@ -319,7 +319,7 @@ $f_C = f_{N1} + f_{F1} + f_{N2} + f_{F2}$
 
 $\tau_C=r_1 \times f_{N1} + r_1 \times f_{F1} + r_2 \times f_{N2} + r_2 \times f_{F2}$
 
-If you know $f_{N1}$, $f_{F1}$, $f_{N2}$, $f_{F2}$ then you can calculate $f_C$ and $\tau_C$ and also the resulting velocity from the box by using these formulars
+If you know $f_{N1}$, $f_{F1}$, $f_{N2}$, $f_{F2}$ then you can calculate $f_C$ and $\tau_C$ and also the resulting velocity / angular velocity from the box by using these formulars
 
 $m \dot v = f_C + f_{ext}$
 
@@ -327,18 +327,20 @@ $I \dot \omega = \tau_C + \tau_{ext}$
 
 $\dot v = \frac{v_2 - v_1}{\Delta t}$
 
-Where $v_1$ is the velocity from the box before applying the gravity- and constraint-force.
+$\dot \omega = \frac{\omega_2 - \omega_1}{\Delta t}$
 
-$v_2$ is the velocity from the box after applying the gravity- and constraint-force.
+Where $v_1$ / $\omega_1$ is the velocity / angular velocity from the box before applying the gravity- and constraint-force.
 
-At the moment $f_C$ and $\tau_C$ is unknown so we can not determine $v_2$
+$v_2$ / $\omega_2$ is the velocity / angular velocity from the box after applying the gravity- and constraint-force.
+
+At the moment $f_C$ and $\tau_C$ is unknown so we can not determine $v_2$ and $\omega_2$.
 
 To derivate a formular, which calculates $f_C$ and $\tau_C$ we need a function, which measures how far the contactpoint from one box is entered into the side from the other box. 
 
-In this example there is one collisionpoint between the two boxes:
+In this example there is one collision point between these two boxes:
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalForce.png" width="115" height="185" />
 
-$r_1$ directs from the center from box 1 to the contactpoint from box 1 and $r_2$ directs from the center from box 2 to the contactpoint from box 2.
+$r_1$ directs from the center from box 1 to the contact point from box 1 and $r_2$ directs from the center from box 2 to the contact point from box 2.
 
 We will now define a function $C_n$ which measures how far into normaldirection the contactpoint from box 2 enters into the upper edge from box 1:
 
@@ -427,7 +429,7 @@ Friction tries to bring the relative velocity from the contactpoints in the tang
 
 ${J \cdot V_2 = 0}$ -> This is our FrictionConstraint
 
-In our example with the cube on slope we have two collisionpoint and each collisionpoint has a normal- and frictionforce. This menas we have 4 Constraint-Equations which all looks like this:
+In our example with the cube on slope we have two collisionpoints and each collisionpoint has a normal- and frictionforce. This means we have 4 Constraint-Equations which all looks like this:
 
 ```math
 J \cdot V_2 = \xi
@@ -484,7 +486,7 @@ That means, if you have a body with current velocity $v_1$ and you apply a force
 
 For the impluse you can write $p=m * (v_2 - v_1)$. If you rearrange this equation to $v_2$ you get $v_2 = \frac{p}{m} + v_1$
 
-If we want to express the $v_2 = \frac{p}{m} + v_1$-term for the constraint-impulse $p_C$ then m must be a 6 by 6 matrix and $v_1$ and $v_2$ are 6 dimensional column-vectors.
+If we want to express the $v_2 = \frac{p}{m} + v_1$-term for the constraint-impulse $p_C$ then m must be a 6 by 6 matrix and $v_1$ and $v_2$ must be 6 dimensional column-vectors.
 
 To use the constraint-impulse $p_C = J^T \cdot \lambda$ we define:
 
@@ -592,7 +594,7 @@ See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/CollisionResol
 
 The next term from formular (4) is $J \cdot V$. We know from the velocity constraint derivation that $\dot C_n(v_1, \omega_1, v_2, \omega_2)= J \cdot V$ is a function which measure the relative velocity between two anchorpoints in normal/tangent-direction. 
 
-The velocity from a anchorpoint p, where the body center moves with v and rotates with $\omega$ and r points to the anchorpoint is defined by $\dot{p}=v + \omega \times r$. See [David Baraff 2-7](https://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf)
+The velocity from a anchorpoint p, where the body center moves with v and rotates with $\omega$ and r points to the anchorpoint is defined by $\dot{p}=v + \vec{\omega} \times r$. See [David Baraff 2-7](https://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf)
 
 This means:
 ```math
@@ -704,7 +706,7 @@ impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
 
 If you would clamp the impulse in this way then the sequentiell impulse algorithm has no chance to correct a impulse, which was to hight.
 
-In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction is needet. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses  remains too high.
+In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction (third impulse in image) is needet. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses (AccumulatedImpulse) remains too high.
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="574" height="135" />
 
 That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
@@ -725,9 +727,9 @@ In this example two collision-points are detected and each point has the distanc
 
 Because of the restitution of zero the normal constraint for both collisionpoints will bring the velocity from the box to zero but the box then remains stuck in the ground.
 
-To correct this a extra impulse is needet, which pushes the box out of the ground. 
+To correct this, a extra impulse is needet, which pushes the box out of the ground. 
 
-The box is moved in each timestep by 'body.Velocity * dt' If you want to move the box 10 pixels uppwards then 'body.Velocity*dt' must be 'new Vec2D(0, -10)' that means body.Velocity must be 'new Vec2D(0, -10) / dt'. Because of this the positionBias contains the follwing term: 
+The box is moved in each timestep by 'body.Velocity * dt' If you want to move the box 10 pixels upwards then 'body.Velocity*dt' must be 'new Vec2D(0, -10)' that means body.Velocity must be 'new Vec2D(0, -10) / dt'. Because of this the positionBias contains the follwing term: 
 
 ```csharp
 s.InvDt * c.Depth
@@ -763,7 +765,7 @@ If you take a look into the TimeStep-method then there are the following steps:
 
 If you would apply the gravity bevore Step 2 then this would change the velocity from each body and in the constructor from each constraint-object the Bias-Function would use a wrong velocity-value to calculate the bias. If you apply gravity after step 4, it will not be taken into account in the constraint loop. The resulting $V_2$ is then wrong. Thats the reason why the gravity is exactly at step 3 after bias-calculation and bevore the constraint-impulse-loop.
 
-I hope this little guide is a good help for understanding how a physics engines works.
+I hope this little guide is a good help for understanding how a physics engines works. Let me know if there is something not clear enough.
 
 Related work
 ------------
