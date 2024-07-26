@@ -6,8 +6,8 @@ namespace Physics.CollisionDetection
     {
         public Vec2D Start { get; }  //Collisionpoint from RigidBody1
         public Vec2D End { get; }    //Collisionpoint from RigidBody2
-        public Vec2D Normal { get; } //Normal from Start-Point
-        public float Depth { get; }     //Distanz between Start and End
+        public Vec2D Normal { get; } //Normal from rectangle side
+        public float Depth { get; }     //Distance between Start and End
         public RigidRectangle B1 { get; }
         public RigidRectangle B2 { get; }
 
