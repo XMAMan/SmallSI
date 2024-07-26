@@ -341,16 +341,35 @@ At the moment $f_C$ and $\tau_C$ is unknown so we can not determine $v_2$ and $\
 
 To derivate a formular, which calculates $f_C$ and $\tau_C$ we need a function, which measures how far the contactpoint from one box is entered into the side from the other box. 
 
-In this example there is one collision point between these two boxes:
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalForce.png" width="115" height="185" />
+To derive this function we use as example two boxes where a collision point was found (left side from the image):
 
-$r_1$ directs from the center from box 1 to the contact point from box 1 and $r_2$ directs from the center from box 2 to the contact point from box 2.
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/CollisionInfo_vs_ContactPoint.png" width="513" height="353" />
 
-We will now define a function $C_n$ which measures how far into normaldirection the contactpoint from box 2 enters into the upper edge from box 1:
+The collisiondetection-routine creates a CollisionInfo-object which contains a Start- and End-Point. To push the boxes with a force apart we need a common point, which is called ContactPoint. This point is located between the Start- and End-Point. We found the point by this function:
+
+```csharp
+public static Vec2D GetContactPoint(CollisionInfo c)
+{
+    Vec2D start = c.Start * (c.B2.InverseMass / (c.B1.InverseMass + c.B2.InverseMass));
+    Vec2D end = c.End * (c.B1.InverseMass / (c.B1.InverseMass + c.B2.InverseMass));
+    return start + end;
+}
+```
+See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/CollisionResolution/ResolutionHelper.cs
+ 
+The mass is used as weighting-factor. If box 1 has more weight then box 2, then the ContactPoint is then closer to c.Start.
+
+$r_1$ directs from the center from box 1 to the contact point and $r_2$ directs from the center from box 2 also to the same contact point.
+
+The anchor point from box 1 is defined by $x_1 + r_1$ and the anchor point from box 2 by $x_2 + r_2$
+
+We will now define a function $C_n$ which measures how far into normaldirection the anchor point from box 2 enters into the upper edge from box 1:
 
 $$C_n = (x_2 + r_2 - x_1 - r_1) * n_1$$
 
-If we want to derive this function with respect to time we need these two rules:
+If you assume that $r_1$ points to c.Start and $r_2$ to c.End then this function would measure how many pixels enters the edge from box 1 into the side from box 2. In our case we have defined that $r_1$ and $r_2$ both points to ContactPoint. We only need the derivation from $C_n$ so for this case it is ok, if $C_n$ don't measure the distance between c.Start and c.End but instead the distance between two anchor points, which both lies on the same location.
+
+We now want to derive this function with respect to time. We need these two rules for this:
 
 Derivative rule for a moving point $x(t)$: $\dot x(t) = v(t)$
 
@@ -361,7 +380,7 @@ The derivative of C with respect to time is now as follows:
 ```math
  \dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1 + (x_2 + r_2 - x_1 - r_1)* (\omega_1 \times n_1)
 ```
-$\dot C_n$ measures the speed at which the collision points move towards each other in the direction of the collision normal. It receives the velocity values ​​of both cubes as input. We now simplify the function by omitting the second plus term, since we assume that the contact points are close to each other and therefore $(x_2 + r_2 - x_1 - r_1)$ is zero. 
+$\dot C_n$ measures the speed at which the collision points move towards each other in the direction of the collision normal. It receives the velocity values ​​of both cubes as input. We now simplify the function by omitting the second plus term, since we have defined the ContactPoint in this way, that $r_1$ and $r_2$ points to the same point. Therefore $(x_2 + r_2 - x_1 - r_1)$ is zero. 
 
 $\dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1$ -> take $n_1$ into the brackets
 
@@ -431,7 +450,7 @@ v_2 \\
 
 Friction tries to bring the relative velocity from the contactpoints in the tangent direction to zero. For our example, where the cube is moveless resting on a slope we want, that $V_2$ satisfy the following equation:
 
-${J \cdot V_2 = 0}$ -> This is our FrictionConstraint
+${J \cdot V_2 = 0}$ -> This is our FrictionConstraint. It says that there should not be a movement in tangent-direction after collision resolution.
 
 In our example with the cube on slope we have two collisionpoints and each collisionpoint has a normal- and frictionforce. This means we have 4 Constraint-Equations which all looks like this:
 
@@ -450,20 +469,20 @@ You can imagin this Constraint-plane as a black line.
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/ConstraintPlane.png" width="307" height="151" />
 
-$V_1$ is a column vector with 6 entries which represents the velocity-values from two bodies after we have detect a collisionpoint between this two bodies and before we have applied any correction-force, which would push these bodies apart. We now want to apply a force to the two contact points from these bodies so that the resulting velocity $V_2$ match the constraint-equation $J \cdot V_2 = \xi$. The shortest way to get from $V_1$ a point $V_2$ on the plane is to go in J-Direction. J is a row-vector and V a column vector. If you transpose J then it is also a column vector. $J^T$ is parallel to the $(V_2 - V_1)$-direction. Because of this you can use the formular $V_2 = V_1 + J^T \cdot \lambda$ with scalar $\lambda$ to calculate $V_2$. If you want to move two contact points in contact point normal/tangent-direction then it means you have to push the contactpoints in $J^T$ direction. 
+$V_1$ is a column vector with 6 entries which represents the velocity-values from two bodies after we have detected a collisionpoint between this two bodies and before we have applied any correction-force, which would push these bodies apart. We now want to apply a force to the two contact points from these bodies so that the resulting velocity $V_2$ match the constraint-equation $J \cdot V_2 = \xi$. The shortest way to get from $V_1$ a point $V_2$ on the plane is to go in J-Direction. J is a row-vector and V a column vector. If you transpose J then it is also a column vector. $J^T$ is parallel to the $(V_2 - V_1)$-direction. Because of this you can use the formular $V_2 = V_1 + J^T \cdot \lambda$ with scalar $\lambda$ to calculate $V_2$. If you want to move two contact points in contact point normal/tangent-direction then it means you have to push the contactpoints in $J^T$ direction. 
 
 J is a 6 dimensional vector. How can it be a 2D-forcedirection? To understand this imagin you have the J from the normalconstraint and want to push the anchorpoint from body 1 in $-n_1$-direction and the anchorpoint from body 2 in $n_1$-direction. A force, which is applied to a anchorpoint is split into a translation-force and torque:
 
 ```csharp
 //Body 1:
 Vec2D linearForce1 = -collisionPoint.Normal;
-float torque1 = Vec2D.ZValueFromCross(r1, -collisionPoint.Normal);
+float torque1 = -Vec2D.ZValueFromCross(r1, collisionPoint.Normal);
 Vec2D linearAcceleration1 = linearForce1 * dt;
 float angularAcceleration1 = torque1 * dt;
 
 //Body 2:
 Vec2D linearForce2 = +collisionPoint.Normal;
-float torque2 = Vec2D.ZValueFromCross(r1, +collisionPoint.Normal);
+float torque2 = Vec2D.ZValueFromCross(r2, collisionPoint.Normal);
 Vec2D linearAcceleration2 = linearForce2 * dt;
 float angularAcceleration2 = torque2 * dt;
 ```
@@ -561,7 +580,7 @@ $\lambda$ is a scalar value and we can now use it to calculate the constraint-im
 
 $p_C = J^T \cdot \frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ (4)
 
-If you have only one constraint then formula (4) could be used to correct the velocity from two bodies. If you think on the example with the cube sitting on a slope then we have 4 constraints between two bodies. This means we are looking for a point $V_2$ that satisfies all 4 constraints. This $V_2$ must be located on all 4 constraint-planes. Such a point can only be found if all four planes intersect at a common point. We assume that this condition is met. You can find the $V_2$-point if you sequentiell apply the impulse from all constraints. If you do this many iterations then you find the $V_2$ which is located on all constraint-planes. To get an understanding from this idea take a look on the following image where two constraints a given.
+If you have only one constraint then formula (4) could be used to correct the velocity from two bodies. If you think on the example with the cube sitting on a slope then we have 4 constraints between two bodies. This means we are looking for a point $V_2$ that satisfies all 4 constraints. This $V_2$ must be located on all 4 constraint-planes. Such a point can only be found if all four planes intersect at a common point. We assume that this condition is met. You can find the $V_2$-point if you sequentiell apply the impulse from all constraints. If you do this many iterations then you find the $V_2$ which is located on all constraint-planes. To get an understanding from this idea take a look on the following image where two constraints are given.
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
 
@@ -571,7 +590,7 @@ If you want to use formula (4) then you have to calculate $\frac{1}{J \cdot M^{-
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalConstraintEffectiveMass.png" width="450" height="405" />
 
-Despite we are working here with vectors and a matrix so resulting term is a scalar value (green marked).
+Despite we are working here with vectors and a matrix the resulting term is a scalar value (green marked).
 
 #### Using the constraint impulse in code
 
@@ -655,7 +674,7 @@ In the code this term is called restitutionBias and is calculated as follows:
 ```csharp
 // Relative velocity in normal direction
 Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, r1, r2);
-float velocityInNormal = relativeVelocity * c.Normal;
+float velocityInNormal = relativeVelocity * c.Normal; //this is the same as writing J*V1
 float restituion = System.Math.Min(c.B1.Restituion, c.B2.Restituion);
 
 float restitutionBias = -restituion * velocityInNormal;
@@ -668,8 +687,8 @@ $p_C = J^T \cdot \frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ (4)
 Into this:
 ```csharp
 Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, c.R1, c.R2);
-float velocityInForceDirection = relativeVelocity * c.ForceDirection;
-float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection);
+float velocityInForceDirection = relativeVelocity * c.ForceDirection; //this is the same as J*V
+float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection); //lambda=forceLength*impulseDuration
 
 //Apply Impulse -> correct the velocity from B1 and B2
 Vec2D impulseVec = impulse * c.ForceDirection;
@@ -681,7 +700,7 @@ c.B2.AngularVelocity += Vec2D.ZValueFromCross(c.R2, impulseVec) * c.B2.InverseIn
 See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
 
 Where $\frac{1}{J \cdot M^{-1} \cdot J^T}$ is the EffectiveMass, $\xi$ is Bias and $J \cdot V$ is velocityInForceDirection.
-$\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with the impulse-variable and applying this constraint-impuls means, that you push body 1 in -ForceDirection-direction and body 2 in +ForceDirection-direction.
+$\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with the impulse-variable and applying this constraint-impuls means, that you push the anchor point $x_1 + r_1$ from body 1 in -ForceDirection-direction and the anchor point $x_2 + r_2$ from body 2 in +ForceDirection-direction.
 
 #### Accumulated Impulse
 
@@ -710,10 +729,11 @@ impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
 
 If you would clamp the impulse in this way then the sequentiell impulse algorithm has no chance to correct a impulse, which was to hight.
 
-In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction (third impulse in image) is needet. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses (AccumulatedImpulse) remains too high.
+In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. You apply multiple impulses so that you AccumulatedImpulse match the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction (third impulse in image) is needet. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses (AccumulatedImpulse) remains too high.
+
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="574" height="135" />
 
-That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
+The first and second impulse (black arrow) is the same between the two variations. After the second impulse the velocity becomes too hight. The upper (right) variation can create a impulse pointing in right direction because the AccumulatedImpulse still points leftward. The lower (false) variation creates no third impulse. So the velocity remains to hight. That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
 
 #### Position correction
 The next unknown think in code are the following lines in the NormalConstraint-class:
@@ -727,6 +747,7 @@ With the normal constraint ${J \cdot V_2 = -J \cdot V_1 * e}$ we determine which
 However, we are currently not specifying what the distance between the anchor points should be. Imaging we have a box with restitution e=0 which is falling down on the ground. In each timestep the box moves a certain distance. If the collision routine now detects, that the box is inside the ground the box will be in the ground with a certain distance.
 
 In this example two collision-points are detected and each point has the distance 'Depth' between the anchorpoints:
+
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/CubeFallingDown.png" width="630" height="217" />
 
 Because of the restitution of zero the normal constraint for both collisionpoints will bring the velocity from the box to zero but the box then remains stuck in the ground.
@@ -749,7 +770,7 @@ This lines of code now means, that the box is pushed AllowedPenetration pixels b
 float positionBias = s.InvDt * System.Math.Max(0, c.Depth - s.AllowedPenetration);
 ```
 
-The next think is the PositionalCorrectionRate. Imagine there is a there is a ball-stack. If you use a PositionalCorrectionRate from 1 the ground will push the lower ball upwards into the upper ball and this will give the upper ball a impulse upwards so that he is thrown away.
+The next think is the PositionalCorrectionRate. Imagine there is a ball-stack. If you use a PositionalCorrectionRate from 1 the ground will push the lower ball upwards into the upper ball and this will give the upper ball a impulse upwards so that he is thrown away.
 If the PositionalCorrectionRate is instead 0.2 then the correction will take place several time steps and in this case the ball stack stands calm.
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/PositionalCorrectionRate.png" width="330" height="264" />
 
