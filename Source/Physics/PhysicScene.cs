@@ -41,8 +41,8 @@ namespace Physics
                 foreach (var c in constraints)
                 {
                     Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, c.R1, c.R2);
-                    float velocityInForceDirection = relativeVelocity * c.ForceDirection;
-                    float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection);
+                    float velocityInForceDirection = relativeVelocity * c.ForceDirection; //this is the same as J*V
+                    float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection); //lambda=forceLength*impulseDuration
 
                     // Clamp the accumulated impulse
                     float oldSum = c.AccumulatedImpulse;

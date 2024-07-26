@@ -41,7 +41,7 @@ namespace Physics.CollisionResolution
             Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, r1, r2);
 
             // Relative velocity in normal direction
-            float velocityInNormal = relativeVelocity * c.Normal;
+            float velocityInNormal = relativeVelocity * c.Normal; //this is the same as writing J*V1
             float restituion = System.Math.Min(c.B1.Restituion, c.B2.Restituion);
 
             float restitutionBias = -restituion * velocityInNormal;
