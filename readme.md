@@ -342,7 +342,22 @@ At the moment $f_C$ and $\tau_C$ is unknown so we can not determine $v_2$ and $\
 To derivate a formular, which calculates $f_C$ and $\tau_C$ we need a function, which measures how far the contactpoint from one box is entered into the side from the other box. 
 
 In this example there is one collision point between these two boxes:
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalForce.png" width="115" height="185" />
+
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/CollisionInfo_vs_ContactPoint.png" width="513" height="353" />
+
+The collisiondetection-routine creates a CollisionInfo-object which contains a Start- and End-Point. To push the boxes with a force apart we need a common point, which is called ContactPoint. This point is located between the Start- and End-Point. We found the point by this function:
+
+```csharp
+public static Vec2D GetContactPoint(CollisionInfo c)
+{
+    Vec2D start = c.Start * (c.B2.InverseMass / (c.B1.InverseMass + c.B2.InverseMass));
+    Vec2D end = c.End * (c.B1.InverseMass / (c.B1.InverseMass + c.B2.InverseMass));
+    return start + end;
+}
+```
+See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/CollisionResolution/ResolutionHelper.cs
+ 
+The mass is used as weighting-factor. If box 1 has more weight then box 2, then the ContactPoint is then closer to c.Start.
 
 $r_1$ directs from the center from box 1 to the contact point from box 1 and $r_2$ directs from the center from box 2 to the contact point from box 2.
 
@@ -361,7 +376,7 @@ The derivative of C with respect to time is now as follows:
 ```math
  \dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1 + (x_2 + r_2 - x_1 - r_1)* (\omega_1 \times n_1)
 ```
-$\dot C_n$ measures the speed at which the collision points move towards each other in the direction of the collision normal. It receives the velocity values ​​of both cubes as input. We now simplify the function by omitting the second plus term, since we assume that the contact points are close to each other and therefore $(x_2 + r_2 - x_1 - r_1)$ is zero. 
+$\dot C_n$ measures the speed at which the collision points move towards each other in the direction of the collision normal. It receives the velocity values ​​of both cubes as input. We now simplify the function by omitting the second plus term, since we have defined the ContactPoint in this way, that $r_1$ and $r_2$ points to the same point. Therefore $(x_2 + r_2 - x_1 - r_1)$ is zero. 
 
 $\dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1$ -> take $n_1$ into the brackets
 
@@ -431,7 +446,7 @@ v_2 \\
 
 Friction tries to bring the relative velocity from the contactpoints in the tangent direction to zero. For our example, where the cube is moveless resting on a slope we want, that $V_2$ satisfy the following equation:
 
-${J \cdot V_2 = 0}$ -> This is our FrictionConstraint
+${J \cdot V_2 = 0}$ -> This is our FrictionConstraint. It says that there should not be a movement in tangent-direction after collision resolution.
 
 In our example with the cube on slope we have two collisionpoints and each collisionpoint has a normal- and frictionforce. This means we have 4 Constraint-Equations which all looks like this:
 
@@ -450,20 +465,20 @@ You can imagin this Constraint-plane as a black line.
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/ConstraintPlane.png" width="307" height="151" />
 
-$V_1$ is a column vector with 6 entries which represents the velocity-values from two bodies after we have detect a collisionpoint between this two bodies and before we have applied any correction-force, which would push these bodies apart. We now want to apply a force to the two contact points from these bodies so that the resulting velocity $V_2$ match the constraint-equation $J \cdot V_2 = \xi$. The shortest way to get from $V_1$ a point $V_2$ on the plane is to go in J-Direction. J is a row-vector and V a column vector. If you transpose J then it is also a column vector. $J^T$ is parallel to the $(V_2 - V_1)$-direction. Because of this you can use the formular $V_2 = V_1 + J^T \cdot \lambda$ with scalar $\lambda$ to calculate $V_2$. If you want to move two contact points in contact point normal/tangent-direction then it means you have to push the contactpoints in $J^T$ direction. 
+$V_1$ is a column vector with 6 entries which represents the velocity-values from two bodies after we have detected a collisionpoint between this two bodies and before we have applied any correction-force, which would push these bodies apart. We now want to apply a force to the two contact points from these bodies so that the resulting velocity $V_2$ match the constraint-equation $J \cdot V_2 = \xi$. The shortest way to get from $V_1$ a point $V_2$ on the plane is to go in J-Direction. J is a row-vector and V a column vector. If you transpose J then it is also a column vector. $J^T$ is parallel to the $(V_2 - V_1)$-direction. Because of this you can use the formular $V_2 = V_1 + J^T \cdot \lambda$ with scalar $\lambda$ to calculate $V_2$. If you want to move two contact points in contact point normal/tangent-direction then it means you have to push the contactpoints in $J^T$ direction. 
 
 J is a 6 dimensional vector. How can it be a 2D-forcedirection? To understand this imagin you have the J from the normalconstraint and want to push the anchorpoint from body 1 in $-n_1$-direction and the anchorpoint from body 2 in $n_1$-direction. A force, which is applied to a anchorpoint is split into a translation-force and torque:
 
 ```csharp
 //Body 1:
 Vec2D linearForce1 = -collisionPoint.Normal;
-float torque1 = Vec2D.ZValueFromCross(r1, -collisionPoint.Normal);
+float torque1 = -Vec2D.ZValueFromCross(r1, collisionPoint.Normal);
 Vec2D linearAcceleration1 = linearForce1 * dt;
 float angularAcceleration1 = torque1 * dt;
 
 //Body 2:
 Vec2D linearForce2 = +collisionPoint.Normal;
-float torque2 = Vec2D.ZValueFromCross(r1, +collisionPoint.Normal);
+float torque2 = Vec2D.ZValueFromCross(r2, collisionPoint.Normal);
 Vec2D linearAcceleration2 = linearForce2 * dt;
 float angularAcceleration2 = torque2 * dt;
 ```
