@@ -31,6 +31,7 @@ class Main
   void HandleTimerTick(float dt)
   {
      box.Center.Y += 1; //Move the box downwards. (0,0) is the upper left corner from the window.
+     box.Angle = 0; //no rotation at the moment
      DrawBox(box); //shows the box on the screen
   }
 }
@@ -85,7 +86,7 @@ The [Torque](https://en.wikipedia.org/wiki/Torque) is defined with $\tau = r \ti
 
 r is the leverage, which points from the centroid to the point where the force f is applied.
 
-Simular to the $F = m * a$ rule there is also for the torque the $\tau = I * \alpha$ rule where I is the [moment of inertia](https://en.wikipedia.org/wiki/Moment_of_inertia) and $\alpha$ is the [angular acceleration](https://en.wikipedia.org/wiki/Angular_acceleration)
+Similar to the $F = m * a$ rule there is also for the torque the $\tau = I * \alpha$ rule where I is the [moment of inertia](https://en.wikipedia.org/wiki/Moment_of_inertia) and $\alpha$ is the [angular acceleration](https://en.wikipedia.org/wiki/Angular_acceleration)
 
 The moment of inertia defines how hard it is to change the angular velocity of a rigid body for a given rotation axis. We want to rotate a 2D-rectangle which is on the XY-plane. This means we will rotate the rectangle around the Z-Axis which goes through the rectangle-center. 
 
@@ -128,7 +129,7 @@ I&= m \frac {w^2 + h^2}{12}
 \end{align}
 ```
 
-Simular to the $a=\frac{dv}{dt} = \dot v_{}$  rule for linear movements we use $\alpha = \frac{d \omega}{dt} = \dot \omega$ for rotational movements where $\omega$ is the [angular velocity](https://en.wikipedia.org/wiki/Angular_velocity)
+Similar to the $a=\frac{dv}{dt} = \dot v_{}$  rule for linear movements we use $\alpha = \frac{d \omega}{dt} = \dot \omega$ for rotational movements where $\omega$ is the [angular velocity](https://en.wikipedia.org/wiki/Angular_velocity)
 
 To describe the current state from a rigid body, which should be a rectangle with constant density, we use now this class:
 ```csharp
@@ -153,18 +154,19 @@ class RigidRectangle
 }
 ```
 
-With this class, we can simulate the movement from a box, where the gravity force is applied to the center from the box and where a other force is applied to a ordinary point on the box.
+With this class, we can simulate the movement from a box, where the gravity force is applied to the center from the box and where a other force is applied to a ordinary point on the box. In this example the extern force could be a thruster which pushes the body on the right side upwards. The thruster pushes the box on the point 'box.Center + new Vec2D(10,0)' and the leverage r to this point is 'new Vec2D(10,0)'. A force $F_{ext}$, which is applied to a point outside the centroid from a body acts in two ways. It creates a linear acceleartion defined by $\dot v = \frac{F_{ext}}{m}$ which will move the center and a angular acceleration defined by $\dot \omega = {\frac{r \times F_{ext}}{I}}_{}$ which will change the angular velocity.
+
 
 ```csharp
 class Main
 {
   private Box box = new Box();  
-  private float gravity = 9.81f;
+  private float gravity = 9.81f; //a=9.81
 
   //This function is called every 20 ms. dt has the value from 20.
   void HandleTimerTick(float dt)
   {
-     //Use gravity-force to change the velocity
+     //Use gravity-acceleration to change the velocity
      box.Velocity.Y += gravity * dt; 
 
      //Use a extern force, which directs to 'forceDirection' and is applied to a anchorpoint 'pointOnBox' to update the velocity
@@ -224,6 +226,8 @@ class RigidRectangle
 
 The next think what we need to let to box falling down on the ground is a function, which determines all collision-points between two boxes. A collision-point is a data structure, which looks like this:
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/CollisionPoint.png" width="712" height="356" />
+
+The start- and end-point from the CollisionInfo-object are the anchorpoints. A force will then act at these points to push the bodys in normal-direction apart. Box 1 is pushed upwards on the start-point in +normal-direction and box 2 is pushed on the end-point downwards in -normal-direction.
 
 The collision-function checks for each edge-point from a box, if it is inside the other box. If so then it checks, which side from the other box has the smallest distance to this point. The normal from this side defines the normal from the CollisionInfo-object.
 
@@ -289,7 +293,7 @@ public static CollisionInfo[] GetAllCollisions(List<RigidRectangle> bodies)
 
 #### Derivation of the constraint impulse
 
-We have now the possibility to simulate a box, which is falling down and to place a fixed box as ground. We can also detect, if there are collisionpoints between the falling box and the ground available. The next think, what we need is a function, which calculate for each collisionpoint a force, which will push the two boxes apart so that the falling box will not sink in the ground. 
+We have now the possibility to simulate a box, which is falling down and to place a fixed box as ground. We can also detect, if there are collisionpoints between the falling box and the ground. The next think, what we need is a function, which calculate for each collisionpoint a force, which will push the two boxes apart so that the falling box will not sink in the ground. 
 
 For each collision-point there are two kind of forces: 
 * NormalForce = Force, which pushes two anchor points between two bodies in collision-normal-direction apart
