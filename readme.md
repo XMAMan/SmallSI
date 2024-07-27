@@ -84,7 +84,7 @@ In this example the box can only falling downwards but there is no rotation at t
 The [Torque](https://en.wikipedia.org/wiki/Torque) is defined with $\tau = r \times F$ which is a force, which will rotate the body around his center.
 ![Image](./Images/Torque.png)
 
-r is the leverage, which points from the centroid to the point where the force f is applied.
+r is the leverage, which points from the centroid to the point where the force F is applied.
 
 Similar to the $F = m * a$ rule there is also for the torque the $\tau = I * \alpha$ rule where I is the [moment of inertia](https://en.wikipedia.org/wiki/Moment_of_inertia) and $\alpha$ is the [angular acceleration](https://en.wikipedia.org/wiki/Angular_acceleration)
 
@@ -296,14 +296,14 @@ public static CollisionInfo[] GetAllCollisions(List<RigidRectangle> bodies)
 We have now the possibility to simulate a box, which is falling down and to place a fixed box as ground. We can also detect, if there are collisionpoints between the falling box and the ground. The next think, what we need is a function, which calculate for each collisionpoint a force, which will push the two boxes apart so that the falling box will not sink in the ground. 
 
 For each collision-point there are two kind of forces: 
-* NormalForce = Force, which pushes two anchor points between two bodies in collision-normal-direction apart
+* NormalForce = Force, which pushaes two anchor points between two bodies in collision-normal-direction apart
 * FrictionForce = Force which pushes the anchor points in tangent-direction. It slows down the movement in tangent-direction.  
 
-If you want to simulate a cube sitting moveless on a slope then you have 5 force-vectors, which will hold the cube in calm.
+If you want to simulate a cube sitting moveless on a slope then you have 5 force-vectors (see blue, red and purple arrows), which will hold the cube in calm.
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Cube_Forces.png" width="318" height="296" />
 
-The gravity pushes the cube downwards. The resulting forces on the two collisionpoints press the cube upwards so that the resulting velocity is zero.
+The gravity pushes the cube downwards. The resulting forces on the two collision points press the cube in normal- and tangent-direction so that the resulting velocity becomes/stay zero.
 
 The gravity-force is called "extern force" and looks like this: 
 
@@ -317,7 +317,7 @@ The gravity-force is called "extern force" and looks like this:
 
 There is no extern force, which will rotate the box so $\tau_{ext}=0$
 
-The resulting forces on the collisionpoints are called constraint-forces. Each force is applied to a anchorpoint and pushes the cube in normal- or tangent-direction and caused a translation-force and a torque. You have to sum these forces for the cube:
+The resulting forces on the collision points are called constraint-forces. Each force is applied to a anchorpoint and pushes the cube in normal- or tangent-direction and caused a translation-force and a torque. You have to sum these forces for the cube:
 
 $f_C = f_{N1} + f_{F1} + f_{N2} + f_{F2}$
 
@@ -373,9 +373,9 @@ We now want to derive this function with respect to time. We need these two rule
 
 Derivative rule for a moving point $x(t)$: $\dot x(t) = v(t)$
 
-Derivative rule for a moving lever from a body with angular velocity $\omega$: $\dot r = \omega \times r$
+Derivative rule for a moving lever $r(t)$ from a body with angular velocity $\omega$: $\dot r(t) = \omega \times r$
 
-The derivative of C with respect to time is now as follows:
+The derivative of $C_n$ with respect to time is now as follows:
 
 ```math
  \dot C_n(v_1, \omega_1, v_2, \omega_2)=(v_2 + \omega_2 \times r_2 - v_1 - \omega_1 \times r_1)*n_1 + (x_2 + r_2 - x_1 - r_1)* (\omega_1 \times n_1)
@@ -452,7 +452,7 @@ Friction tries to bring the relative velocity from the contactpoints in the tang
 
 ${J \cdot V_2 = 0}$ -> This is our FrictionConstraint. It says that there should not be a movement in tangent-direction after collision resolution.
 
-In our example with the cube on slope we have two collisionpoints and each collisionpoint has a normal- and frictionforce. This means we have 4 Constraint-Equations which all looks like this:
+In our example with the cube on slope we have two collisionpoints and each collisionpoint has a normal- and frictionforce. This means we have 4 Constraint-Equations for two bodies which all looks like this:
 
 ```math
 J \cdot V_2 = \xi
@@ -471,16 +471,16 @@ You can imagin this Constraint-plane as a black line.
 
 $V_1$ is a column vector with 6 entries which represents the velocity-values from two bodies after we have detected a collisionpoint between this two bodies and before we have applied any correction-force, which would push these bodies apart. We now want to apply a force to the two contact points from these bodies so that the resulting velocity $V_2$ match the constraint-equation $J \cdot V_2 = \xi$. The shortest way to get from $V_1$ a point $V_2$ on the plane is to go in J-Direction. J is a row-vector and V a column vector. If you transpose J then it is also a column vector. $J^T$ is parallel to the $(V_2 - V_1)$-direction. Because of this you can use the formular $V_2 = V_1 + J^T \cdot \lambda$ with scalar $\lambda$ to calculate $V_2$. If you want to move two contact points in contact point normal/tangent-direction then it means you have to push the contactpoints in $J^T$ direction. 
 
-J is a 6 dimensional vector. How can it be a 2D-forcedirection? To understand this imagin you have the J from the normalconstraint and want to push the anchorpoint from body 1 in $-n_1$-direction and the anchorpoint from body 2 in $n_1$-direction. A force, which is applied to a anchorpoint is split into a translation-force and torque:
+J is a 6 dimensional vector. How can it be a 2D-forcedirection? To understand this imagin you have the J from the normalconstraint and want to push the anchorpoint from body 1 in $-n_1$-direction and the anchorpoint from body 2 in $n_1$-direction. A force, which is applied to a anchorpoint is split into a translation-force and torque. We use again as in the example above the formulas $\dot v = \frac{F}{m}$ and $\dot \omega = {\frac{r \times F}{I}}_{}$:
 
 ```csharp
-//Body 1:
+//Body 1: push body 1 on the point x1+r1 in -collisionPoint.Normal direction
 Vec2D linearForce1 = -collisionPoint.Normal;
 float torque1 = -Vec2D.ZValueFromCross(r1, collisionPoint.Normal);
 Vec2D linearAcceleration1 = linearForce1 * dt;
 float angularAcceleration1 = torque1 * dt;
 
-//Body 2:
+//Body 2: push body 2 on the point x2+r2 in +collisionPoint.Normal direction
 Vec2D linearForce2 = +collisionPoint.Normal;
 float torque2 = Vec2D.ZValueFromCross(r2, collisionPoint.Normal);
 Vec2D linearAcceleration2 = linearForce2 * dt;
@@ -503,9 +503,9 @@ In this example you see, that J is always in this form, that it contains a force
 
 We can now define the constraint-force-direction by $F_C=J^T$ which will applied to two anchorpoints. We only need for each constraint the unknown $\lambda$ to calculate the length of all constraint-forces. 
 
-From [newton's law](https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion) we know that the impulse is defined by $p=m \Delta v$ with $\Delta v=v_2 - v_1$ and if you apply a constant force F over $\Delta t$ seconds you get also the impulse $p=F \Delta t$
+From [newton's law](https://en.wikipedia.org/wiki/Newton%27s_laws_of_motion) we know that the impulse is defined by $p=m \cdot \Delta v$ with $\Delta v=v_2 - v_1$ and if you apply a constant force $F$ over $\Delta t$ seconds you get also the impulse $p=F \cdot \Delta t$ where $\Delta t$ is the impulse durration.
 
-That means, if you have a body with current velocity $v_1$ and you apply a force F for $\Delta t$ seconds then his velocity would be changed by $\Delta v$. If you use the term $J^T \cdot \lambda$ then $\lambda$ could be the forcelength but because of the $p=F \Delta t$-rule $\lambda$ could also be the product from the constraint-forcelength and the constraint-impulse-durration. In our case we only need a impulse so we define the constraint-impulse by $p_C = J^T \cdot \lambda$.
+That means, if you have a body with current velocity $v_1$ and you apply a force $F$ for $\Delta t$ seconds then his velocity would be changed by $\Delta v$. If you use the term $J^T \cdot \lambda$ with  $J^T=F_C$ then $\lambda$ could be the forcelength but because of the $p=F \cdot \Delta t$-rule where $F$ is replaced with $F_C=J^T*\lambda_{forceLength}$, $\lambda$ could also be the product from the constraint-forcelength and the constraint-impulse-durration. In our case we only need a impulse so we define the constraint-impulse by $p_C = J^T \cdot \lambda$.
 
 For the impluse you can write $p=m * (v_2 - v_1)$. If you rearrange this equation to $v_2$ you get $v_2 = \frac{p}{m} + v_1$
 
@@ -558,13 +558,13 @@ which is the velocity from two bodies.
 
 We use now the following equations to get the value for $\lambda$
 
-$V_2 = V + M^{-1} \cdot p_C$ (1) -> This comes from the $p=m*\Delta v$- and $v_2 = \frac{p}{m} + v_1$-rule.
+$V_2 = V + M^{-1} \cdot p_C$ (1) -> This comes from the $p=m \cdot \Delta v$- and $v_2 = \frac{p}{m} + v_1$-rule.
 
 $p_C = J^T \cdot \lambda$ (2) -> The constraint-force-direction is parallel to the constraint-impulse. $\lambda$ is the product of forcelength and impulse durration
 
 $J \cdot V_2 = \xi$ (3) -> This is our constraint-equation where $V_2$ should be a point on the constraint plane
 
-Equation (1) is substituted for V2 in equation (3):
+Equation (1) is substituted for $V_2$ in equation (3):
 
 $J \cdot (V + M^{-1} \cdot p_C) = \xi$ -> multiply with J
 
@@ -584,7 +584,7 @@ If you have only one constraint then formula (4) could be used to correct the ve
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
 
-You start on $V_1$. Applying the first impulse for constraint 1 which will correct the velocity-values from the two associated bodys for this constraint. Then you use the corrected velocitys which is the V in formula (4) and use the impulse from constraint 2.
+You start on $V_1$. Applying the first impulse for constraint 1 which will correct the velocity-values from the two associated bodys for this constraint. Then you use the corrected velocitys which is the $V$ in formula (4) and use the impulse from constraint 2.
 
 If you want to use formula (4) then you have to calculate $\frac{1}{J \cdot M^{-1} \cdot J^T}$. This term is called effective Mass. For the normal constraint the calculation from the $J \cdot M^{-1} \cdot J^T$-term is:
 
@@ -617,7 +617,7 @@ See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/CollisionResol
 
 The next term from formular (4) is $J \cdot V$. We know from the velocity constraint derivation that $\dot C_n(v_1, \omega_1, v_2, \omega_2)= J \cdot V$ is a function which measure the relative velocity between two anchorpoints in normal/tangent-direction. 
 
-The velocity from a anchorpoint p, where the body center moves with v and rotates with $\omega$ and r points to the anchorpoint is defined by $\dot{p}=v + \vec{\omega} \times r$. See [David Baraff 2-7](https://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf)
+The velocity from a anchorpoint $p$, where the body center moves with $v$ and rotates with $\omega$ and $r$ points to the anchorpoint is defined by $\dot{p}=v + \vec{\omega} \times r$. See [David Baraff 2-7](https://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf)
 
 This means:
 ```math
@@ -675,7 +675,7 @@ In the code this term is called restitutionBias and is calculated as follows:
 // Relative velocity in normal direction
 Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, r1, r2);
 float velocityInNormal = relativeVelocity * c.Normal; //this is the same as writing J*V1
-float restituion = System.Math.Min(c.B1.Restituion, c.B2.Restituion);
+float restituion = System.Math.Min(c.B1.Restituion, c.B2.Restituion); //Symbol: e
 
 float restitutionBias = -restituion * velocityInNormal;
 ```
@@ -699,8 +699,8 @@ c.B2.AngularVelocity += Vec2D.ZValueFromCross(c.R2, impulseVec) * c.B2.InverseIn
 ```
 See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
 
-Where $\frac{1}{J \cdot M^{-1} \cdot J^T}$ is the EffectiveMass, $\xi$ is Bias and $J \cdot V$ is velocityInForceDirection.
-$\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with the impulse-variable and applying this constraint-impuls means, that you push the anchor point $x_1 + r_1$ from body 1 in -ForceDirection-direction and the anchor point $x_2 + r_2$ from body 2 in +ForceDirection-direction.
+Where $\frac{1}{J \cdot M^{-1} \cdot J^T}$ is the c.EffectiveMass, $\xi$ is c.Bias and $J \cdot V$ is velocityInForceDirection.
+$\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with the impulse-variable and applying this constraint-impuls means, that you push the anchor point $x_1 + r_1$ from body 1 in -c.ForceDirection-direction and the anchor point $x_2 + r_2$ from body 2 in +c.ForceDirection-direction where c.ForceDirection is the normal/tangent from a collision point.
 
 #### Accumulated Impulse
 
@@ -729,11 +729,11 @@ impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
 
 If you would clamp the impulse in this way then the sequentiell impulse algorithm has no chance to correct a impulse, which was to hight.
 
-In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needet impuls is the blue vector. You apply multiple impulses so that you AccumulatedImpulse match the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impuls in right direction (third impulse in image) is needet. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses (AccumulatedImpulse) remains too high.
+In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needed impulse is the blue vector. You apply multiple impulses so that the AccumulatedImpulse match the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impulse in right direction (third impulse in image) is needed. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses (AccumulatedImpulse) remains too high.
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="574" height="135" />
 
-The first and second impulse (black arrow) is the same between the two variations. After the second impulse the velocity becomes too hight. The upper (right) variation can create a impulse pointing in right direction because the AccumulatedImpulse still points leftward. The lower (false) variation creates no third impulse. So the velocity remains to hight. That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
+The first and second impulse (black arrow) is the same between the two variations. The second impulse was to high so that the velocity between two anchor points is too high now. The upper (right) variation can create a impulse pointing in right direction because the AccumulatedImpulse still points leftward. The lower (false) variation creates no third impulse. So the velocity remains to hight. That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
 
 #### Position correction
 The next unknown think in code are the following lines in the NormalConstraint-class:
