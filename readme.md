@@ -15,8 +15,8 @@ class Box
 {
   public float Width = 1;
   public float Height = 1;
-  public Vec2D Center = new Vec2D(0,0); //Position from the center from the box
-  public float Angle = 0; //Oriantation around the Z-Aches [0..2PI]
+  public Vec2D Center = new Vec2D(0,0); //XY-Position from the center from the box
+  public float Angle = 0; //Oriantation around the Z-Axis [0..2PI]
 }
 ```
 
@@ -32,12 +32,12 @@ class Main
   {
      box.Center.Y += 1; //Move the box downwards. (0,0) is the upper left corner from the window.
      box.Angle = 0; //no rotation at the moment
-     DrawBox(box); //shows the box on the screen
+     DrawBox(box); //show the box on the screen
   }
 }
 ```
 
-This function would make the box fall evenly downwards. But here we would like to use Newton’s physical laws for the movement. This means we want to use the formula $F = m * a$. In our case we have only want to use the the gravity with a=9.81. The box needs at next a Mass-Property which will be the m-variable in the formular. The Gravity-force F will produce a acceleration of $a = \frac{F}{m}$. Acceleration is defined as the rate of change of velocity with respect to time. The second derivative of the position x also gives the acceleration. $a=\frac{dv}{dt}=\dot{v}=\ddot{x}$. The next think which we need to describe the current state from our box is the velocity. 
+This function would make the box fall evenly downwards. But here we would like to use Newton’s physical laws for the movement. This means we want to use the formula $F = m * a$. In our case we only want to use the gravity with a=9.81. The box needs at next a Mass-Property which will be the m-variable in the formular. The Gravity-force F will produce a acceleration of $a = \frac{F}{m}$. Acceleration is defined as the rate of change of velocity with respect to time. The second derivative of the position x also gives the acceleration. $a=\frac{dv}{dt}=\dot{v}=\ddot{x}$. The next think which we need to describe the current state from our box is the velocity. 
 Our new box-class looks now like this:
 
 ```csharp
@@ -45,8 +45,8 @@ class Box
 {
   public float Width = 1;
   public float Height = 1;
-  public Vec2D Center = new Vec2D(0,0); //Position from the center from the box. Symbol: x
-  public float Angle = 0; //Oriantation around the Z-Aches [0..2PI] Symbol: Phi
+  public Vec2D Center = new Vec2D(0,0); //XY-Position from the center from the box. Symbol: x
+  public float Angle = 0; //Oriantation around the Z-axis [0..2PI] Symbol: Phi
   public float Mass = 1; //Symbol: m
   public Vec2D Velocity = new Vec2D(0,0);  //Symbol: v
 }
