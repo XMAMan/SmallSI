@@ -258,6 +258,7 @@ CollisionInfo[] GetCollisionPoints(RigidRectangle box1, RigidRectangle box2)
   return list.ToArray();
 }
 ```
+
 If you have a list of multiple boxes, then you have to check for every box-pair, if there a collisionpoints available. You do this by two nested loops.
 If both bodies (boxes) not moveable then you don't need a collision-check. You can speed up the process, that before calling the GetCollisionPoints-function, you check if the bounding-circles overlaps:
 
@@ -288,6 +289,7 @@ public static CollisionInfo[] GetAllCollisions(List<RigidRectangle> bodies)
      return collisions.ToArray();
  }
 ```
+See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/CollisionDetection/CollisionHelper.cs
 
 ### Collisionresolution
 
@@ -296,7 +298,7 @@ public static CollisionInfo[] GetAllCollisions(List<RigidRectangle> bodies)
 We have now the possibility to simulate a box, which is falling down and to place a fixed box as ground. We can also detect, if there are collisionpoints between the falling box and the ground. The next think, what we need is a function, which calculate for each collisionpoint a force, which will push the two boxes apart so that the falling box will not sink in the ground. 
 
 For each collision-point there are two kind of forces: 
-* NormalForce = Force, which pushaes two anchor points between two bodies in collision-normal-direction apart
+* NormalForce = Force, which pushes two anchor points between two bodies in collision-normal-direction apart
 * FrictionForce = Force which pushes the anchor points in tangent-direction. It slows down the movement in tangent-direction.  
 
 If you want to simulate a cube sitting moveless on a slope then you have 5 force-vectors (see blue, red and purple arrows), which will hold the cube in calm.
