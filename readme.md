@@ -138,7 +138,7 @@ class RigidRectangle
   public float Width = 1;
   public float Height = 1;
   public Vec2D Center = new Vec2D(0,0); //Position from the center from the box. Symbol: x
-  public float Angle = 0; //Oriantation around the Z-Aches [0..2PI] Symbol: Phi
+  public float Angle = 0; //Oriantation around the Z-axis [0..2PI] Symbol: Phi
   public Vec2D Velocity = new Vec2D(0,0);  //Symbol: v
   public float AngularVelocity = 0; //Symbol: Omega
   public float Mass = 1; //Symbol: m
