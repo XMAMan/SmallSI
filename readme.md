@@ -54,7 +54,7 @@ class Box
 The $F = m * a$-formular is a differential equation which can be solved with the Semi-implicit Euler method to get the position from each timestep. To use Semi-implicit Euler you have a x- and v-variable. Then you calculate at first the new value for velocity v and after this the new value for position x. You only use this two formulars if you use the time step size h:
 
 ```math
-\begin{align}v_2 &= v_1 * \frac{F}{m} * h \\ x_1 &= x_1 + v_2 * h \end{align}
+\begin{align}v_2 &= v_1 * \frac{F}{m} * h \\ x_2 &= x_1 + v_2 * h \end{align}
 ```
 
 The new function, which will move our box with semi-implicit euler looks like this now:
