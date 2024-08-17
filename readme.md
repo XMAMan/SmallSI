@@ -707,6 +707,7 @@ $\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with
 Applying the correction-impulse 'formular (4)' for each constraint means, that we have to iteratate over all constraint-objects, where each constraint-object has its own values for $J^T$, $\xi$ and $J \cdot M^{-1} \cdot J^T$. That means this piece of code
 
 ```csharp
+//Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
 for (int i = 0; i < this.Settings.IterationCount; i++)
 {
   foreach (var c in constraints)
