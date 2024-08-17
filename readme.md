@@ -704,6 +704,37 @@ See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
 Where $\frac{1}{J \cdot M^{-1} \cdot J^T}$ is the c.EffectiveMass, $\xi$ is c.Bias and $J \cdot V$ is velocityInForceDirection.
 $\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with the impulse-variable and applying this constraint-impuls means, that you push the anchor point $x_1 + r_1$ from body 1 in -c.ForceDirection-direction and the anchor point $x_2 + r_2$ from body 2 in +c.ForceDirection-direction where c.ForceDirection is the normal/tangent from a collision point.
 
+Applying the correction-impulse 'formular (4)' for each constraint means, that we have to iteratate over all constraint-objects, where each constraint-object has its own values for $J^T$, $\xi$ and $J \cdot M^{-1} \cdot J^T$. That means this piece of code
+
+```csharp
+for (int i = 0; i < this.Settings.IterationCount; i++)
+{
+  foreach (var c in constraints)
+  {
+    Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, c.R1, c.R2);
+    float velocityInForceDirection = relativeVelocity * c.ForceDirection; //this is the same as J*V
+    float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection); //lambda=forceLength*impulseDuration
+
+    // Clamp the accumulated impulse
+    //...
+
+    //Apply Impulse -> correct the velocity from B1 and B2
+    Vec2D impulseVec = impulse * c.ForceDirection;
+    c.B1.Velocity -= impulseVec * c.B1.InverseMass;
+    c.B1.AngularVelocity -= Vec2D.ZValueFromCross(c.R1, impulseVec) * c.B1.InverseInertia;
+    c.B2.Velocity += impulseVec * c.B2.InverseMass;
+    c.B2.AngularVelocity += Vec2D.ZValueFromCross(c.R2, impulseVec) * c.B2.InverseInertia;
+  }
+}
+```
+See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
+
+can be imagined graphically with this image:
+
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
+
+where the velocity from each body is corrected in that way, that each constraint is satisfied.
+
 #### Accumulated Impulse
 
 If you now look in the TimeStep-Method from the PhysicScene-class then you might wonder what this lines of code do:
