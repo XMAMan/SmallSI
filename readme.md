@@ -734,7 +734,7 @@ can be imagined graphically with this image:
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
 
-where the velocity from each body is corrected in that way, that each constraint is satisfied.
+where the velocity from each body is corrected in that way, that each constraint $J \cdot V = \xi$ is satisfied.
 
 #### Accumulated Impulse
 
