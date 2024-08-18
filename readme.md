@@ -776,6 +776,7 @@ The next unknown think in code are the following lines in the NormalConstraint-c
 float biasFactor = s.DoPositionalCorrection ? s.PositionalCorrectionRate : 0.0f;
 float positionBias = biasFactor * s.InvDt * System.Math.Max(0, c.Depth - s.AllowedPenetration);
 ```
+See GetBias-Method: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/CollisionResolution/NormalConstraint.cs
 
 With the normal constraint ${J \cdot V_2 = -J \cdot V_1 * e}$ we determine which relative speed the contact points should have after the correction.
 However, we are currently not specifying what the distance between the anchor points should be. Imaging we have a box with restitution e=0 which is falling down on the ground. In each timestep the box moves a certain distance. If the collision routine now detects, that the box is inside the ground the box will be in the ground with a certain distance.
