@@ -825,6 +825,71 @@ If you take a look into the TimeStep-method then there are the following steps:
 
 If you would apply the gravity bevore Step 2 then this would change the velocity from each body and in the constructor from each constraint-object the Bias-Function would use a wrong velocity-value to calculate the bias. If you apply gravity after step 4, it will not be taken into account in the constraint loop. The resulting $V_2$ is then wrong. Thats the reason why the gravity is exactly at step 3 after bias-calculation and bevore the constraint-impulse-loop.
 
+#### The TimeStep-Method
+
+With all the knowledge you have gained here, you should now be able to understand how the TimeStep method from the PhysicScene class moves all the boxes by applying gravity, normal, and friction forces. Step 1 determines all collision points and stores this information in the collisionsFromThisTimeStep-variable (CollisionInfo-Array). This CollisionInfo-objects are used the create the IConstraint-objects. If there are no collision points, no IConstraint-objects are created. Step 3 change the velocity-value from all bodies according the gravity.
+If there are collision points available, then step 4 change the velocity from each body in that way, that the bodies are not overlap and that there also the friction force is applied.
+Step 3 and 4 has changed only the velocity from each body and this velocity is now used the calculate new position-values. If this change in the position has caused new collision points then the next TimeStep-call will correct again the position-values from all boxes.  
+
+```csharp
+public void TimeStep(float dt)
+{
+    //Step 1: Get all collisionpoints
+    var collisionsFromThisTimeStep = CollisionHelper.GetAllCollisions(Bodies);
+
+    //Step 2: Create Constraints
+    this.Settings.Dt = dt;
+    this.Settings.InvDt = dt > 0.0f ? 1.0f / dt : 0.0f;
+    List<IConstraint> constraints = new List<IConstraint>();
+    foreach (var point in collisionsFromThisTimeStep)
+    {
+        constraints.Add(new NormalConstraint(this.Settings, point));
+        constraints.Add(new FrictionConstraint(this.Settings, point));                
+    }
+
+    //Step 3: Apply Gravity-Force
+    foreach (var body in Bodies)
+    {
+        //Body is not moveable
+        if (body.InverseMass == 0)
+            continue;
+        
+        body.Velocity.Y += this.Settings.Gravity * dt; //v2 = v1 + a * dt     a = gravity
+    }
+
+    //Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
+    for (int i = 0; i < this.Settings.IterationCount; i++)
+    {
+        foreach (var c in constraints)
+        {
+            Vec2D relativeVelocity = ResolutionHelper.GetRelativeVelocityBetweenAnchorPoints(c.B1, c.B2, c.R1, c.R2);
+            float velocityInForceDirection = relativeVelocity * c.ForceDirection; //this is the same as J*V
+            float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection); //lambda=forceLength*impulseDuration
+
+            // Clamp the accumulated impulse
+            float oldSum = c.AccumulatedImpulse;
+            c.AccumulatedImpulse = ResolutionHelper.Clamp(oldSum + impulse, c.MinImpulse, c.MaxImpulse);
+            impulse = c.AccumulatedImpulse - oldSum;
+
+            //Apply Impulse -> correct the velocity from B1 and B2
+            Vec2D impulseVec = impulse * c.ForceDirection;
+            c.B1.Velocity -= impulseVec * c.B1.InverseMass;
+            c.B1.AngularVelocity -= Vec2D.ZValueFromCross(c.R1, impulseVec) * c.B1.InverseInertia;
+            c.B2.Velocity += impulseVec * c.B2.InverseMass;
+            c.B2.AngularVelocity += Vec2D.ZValueFromCross(c.R2, impulseVec) * c.B2.InverseInertia;
+        }
+    }
+
+    //Step 5: Move bodies
+    foreach (var body in this.Bodies)
+    {
+        body.MoveCenter(dt * body.Velocity);
+        body.Rotate(dt * body.AngularVelocity);
+    }
+}
+```
+See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
+
 I hope this little guide is a good help for understanding how a physics engines works. Let me know if there is something not clear enough.
 
 Related work
