@@ -582,7 +582,7 @@ $\lambda$ is a scalar value and we can now use it to calculate the constraint-im
 
 $p_C = J^T \cdot \frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ (4)
 
-If you have only one constraint then formula (4) could be used to correct the velocity from two bodies. If you think on the example with the cube sitting on a slope then we have 4 constraints between two bodies. This means we are looking for a point $V_2$ that satisfies all 4 constraints. This $V_2$ must be located on all 4 constraint-planes. Such a point can only be found if all four planes intersect at a common point. We assume that this condition is met. You can find the $V_2$-point if you sequentiell apply the impulse from all constraints. If you do this many iterations then you find the $V_2$ which is located on all constraint-planes. To get an understanding from this idea take a look on the following image where two constraints are given.
+If you have only one constraint then formula (4) could be used to correct the velocity from two bodies. If you think on the example with the cube sitting on a slope then we have 4 constraints between two bodies. This means we are looking for a point $V_2$ that satisfies all 4 constraints. This $V_2$ must be located on all 4 constraint-planes. Such a point can only be found if all four planes intersect at a common point. We assume that this condition is met. You can find the $V_2$-point if you sequential apply the impulse from all constraints. If you do this many iterations then you find the $V_2$ which is located on all constraint-planes. To get an understanding from this idea take a look on the following image where two constraints are given.
 
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
 
@@ -707,7 +707,7 @@ $\frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ is a scalar and is named with
 Applying the correction-impulse 'formular (4)' for each constraint means, that we have to iteratate over all constraint-objects, where each constraint-object has its own values for $J^T$, $\xi$ and $J \cdot M^{-1} \cdot J^T$. That means this piece of code
 
 ```csharp
-//Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
+//Step 4: Apply Normal- and Friction-Force by using sequential impulses
 for (int i = 0; i < this.Settings.IterationCount; i++)
 {
   foreach (var c in constraints)
@@ -761,7 +761,7 @@ float impulse = c.EffectiveMass * (c.Bias - velocityInForceDirection);
 impulse = ResolutionHelper.Clamp(impulse, c.MinImpulse, c.MaxImpulse);
 ```
 
-If you would clamp the impulse in this way then the sequentiell impulse algorithm has no chance to correct a impulse, which was to hight.
+If you would clamp the impulse in this way then the sequential impulse algorithm has no chance to correct a impulse, which was to hight.
 
 In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needed impulse is the blue vector. You apply multiple impulses so that the AccumulatedImpulse match the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impulse in right direction (third impulse in image) is needed. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses (AccumulatedImpulse) remains too high.
 
@@ -820,7 +820,7 @@ If you take a look into the TimeStep-method then there are the following steps:
 * Step 1: Get all collisionpoints
 * Step 2: Create Constraints
 * Step 3: Apply Gravity-Force
-* Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
+* Step 4: Apply Normal- and Friction-Force by using sequential impulses
 * Step 5: Move bodies
 
 If you would apply the gravity bevore Step 2 then this would change the velocity from each body and in the constructor from each constraint-object the Bias-Function would use a wrong velocity-value to calculate the bias. If you apply gravity after step 4, it will not be taken into account in the constraint loop. The resulting $V_2$ is then wrong. Thats the reason why the gravity is exactly at step 3 after bias-calculation and bevore the constraint-impulse-loop.
@@ -857,7 +857,7 @@ public void TimeStep(float dt)
         body.Velocity.Y += this.Settings.Gravity * dt; //v2 = v1 + a * dt     a = gravity
     }
 
-    //Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
+    //Step 4: Apply Normal- and Friction-Force by using sequential impulses
     for (int i = 0; i < this.Settings.IterationCount; i++)
     {
         foreach (var c in constraints)
