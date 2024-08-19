@@ -35,7 +35,7 @@ namespace Physics
                 body.Velocity.Y += this.Settings.Gravity * dt; //v2 = v1 + a * dt     a = gravity
             }
 
-            //Step 4: Apply Normal- and Friction-Force by using sequentiell impulses
+            //Step 4: Apply Normal- and Friction-Force by using Sequential Impulses
             for (int i = 0; i < this.Settings.IterationCount; i++)
             {
                 foreach (var c in constraints)
