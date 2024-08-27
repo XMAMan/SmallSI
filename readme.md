@@ -429,7 +429,7 @@ This means if the contact points between two bodies move by example with a speed
 
 We also want a Friction-force which pushes in tangent direction $t_1$
 ```math
-t_1=\begin{bmatrix} -n_{1x} \\ n_{1y} \end{bmatrix}
+t_1=\begin{bmatrix} -n_{1y} \\ n_{1x} \end{bmatrix}
 ```
 
 For the frictionconstraint we use the same derivation as for the normalconstraint:
