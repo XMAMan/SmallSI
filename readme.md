@@ -590,7 +590,7 @@ You start on $V_1$. Applying the first impulse for constraint 1 which will corre
 
 If you want to use formula (4) then you have to calculate $\frac{1}{J \cdot M^{-1} \cdot J^T}$. This term is called effective Mass. For the normal constraint the calculation from the $J \cdot M^{-1} \cdot J^T$-term is:
 
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalConstraintEffectiveMass.png" width="450" height="405" />
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/NormalConstraintEffectiveMass.png" width="675" height="607" />
 
 Despite we are working here with vectors and a matrix the resulting term is a scalar value (green marked).
 
@@ -765,7 +765,7 @@ If you would clamp the impulse in this way then the sequential impulse algorithm
 
 In this image you see the comparison between right and wrong impulse clamping. The normalconstraint should push a body in left direction. The needed impulse is the blue vector. You apply multiple impulses so that the AccumulatedImpulse match the blue vector. If there are multiple constraints then it can happen, that the current velocity between two bodies becomes too hight and then a correction-impulse in right direction (third impulse in image) is needed. If you use the wrong clamping then you have no chance to correct this and the sum over all impulses (AccumulatedImpulse) remains too high.
 
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="574" height="135" />
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/AccumulatedImpulse.png" width="861" height="203" />
 
 The first and second impulse (black arrow) is the same between the two variations. The second impulse was to high so that the velocity between two anchor points is too high now. The upper (right) variation can create a impulse pointing in right direction because the AccumulatedImpulse still points leftward. The lower (false) variation creates no third impulse. So the velocity remains to hight. That is the reason, why we use the clamping for the impulse-sum but not for the single-impulse. 
 
@@ -807,6 +807,7 @@ float positionBias = s.InvDt * System.Math.Max(0, c.Depth - s.AllowedPenetration
 
 The next think is the PositionalCorrectionRate. Imagine there is a ball-stack. If you use a PositionalCorrectionRate from 1 the ground will push the lower ball upwards into the upper ball and this will give the upper ball a impulse upwards so that he is thrown away.
 If the PositionalCorrectionRate is instead 0.2 then the correction will take place several time steps and in this case the ball stack stands calm.
+
 <img src="https://github.com/XMAMan/SmallSI/blob/master/Images/PositionalCorrectionRate.png" width="330" height="264" />
 
 The last think is the DoPositionalCorrection-switch. If you want to simulate a jumping-ball/cube with restituion from 1 then position correction would give the ball at each bounce a extra impulse. This means that the ball gets higher with each jump. If you want to simulate a jumping ball with  restituion 1 then you would set DoPositionalCorrection to false.
