@@ -584,7 +584,7 @@ $p_C = J^T \cdot \frac{\xi - J \cdot V}{J \cdot M^{-1} \cdot J^T}$ (4)
 
 If you have only one constraint then formula (4) could be used to correct the velocity from two bodies. If you think on the example with the cube sitting on a slope then we have 4 constraints between two bodies. This means we are looking for a point $V_2$ that satisfies all 4 constraints. This $V_2$ must be located on all 4 constraint-planes. Such a point can only be found if all four planes intersect at a common point. We assume that this condition is met. You can find the $V_2$-point if you sequential apply the impulse from all constraints. If you do this many iterations then you find the $V_2$ which is located on all constraint-planes. To get an understanding from this idea take a look on the following image where two constraints are given.
 
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiall_Impulses_Equations_of_Planes.png" width="439" height="240" />
 
 You start on $V_1$. Applying the first impulse for constraint 1 which will correct the velocity-values from the two associated bodys for this constraint. Then you use the corrected velocitys which is the $V$ in formula (4) and use the impulse from constraint 2.
 
@@ -732,7 +732,7 @@ See: https://github.com/XMAMan/SmallSI/blob/master/Source/Physics/PhysicScene.cs
 
 can be imagined graphically with this image:
 
-<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiell_Impulses_Equations_of_Planes.png" width="439" height="240" />
+<img src="https://github.com/XMAMan/SmallSI/blob/master/Images/Sequentiall_Impulses_Equations_of_Planes.png" width="439" height="240" />
 
 where the velocity from each body is corrected in that way, that each constraint $J \cdot V = \xi$ is satisfied.
 
