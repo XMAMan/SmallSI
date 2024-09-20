@@ -92,9 +92,9 @@ The moment of inertia defines how hard it is to change the angular velocity of a
 
 For the simple 2D-case we can use this [formular](https://www.toptal.com/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics)
 
-$$I = \int_V p(r) r^2 dV$$
+$$I = \int_A p(r) r^2 dA$$
 
-where we integrate over all points from the shape. r is a vector from the center to each point from V and p(r) is the density at each point.
+where we integrate over all points from the shape. r is a vector from the center to each point from A and p(r) is the density at each point. $dA$ is the differential area element with $dA=dx \cdot dy$
 
 If we calculate this for a rectangle with constant density c, whose center is at (0,0) and which has a width of w and a height of h, then we get:
 
